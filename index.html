@@ -1,0 +1,1461 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>《世界聯盟》遊戲輔助與事件生成器</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font Fredoka & Noto Sans TC for Cute Style -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', 'Fredoka', cursive, sans-serif;
+            background-color: #e2ece9; /* 溫和的淡綠底色 */
+            background-image: 
+                radial-gradient(#cddcd7 15%, transparent 16%),
+                radial-gradient(#cddcd7 15%, transparent 16%);
+            background-size: 30px 30px;
+            background-position: 0 0, 15px 15px;
+            color: #4a4741;
+        }
+
+        /* 溫馨手繪風格容器 */
+        .cute-card {
+            background-color: #fcfbfa;
+            border: 3px solid #6b635b;
+            border-radius: 28px;
+            box-shadow: 0 8px 0px #d0c8be, 0 12px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .cute-inner-card {
+            background-color: #f4efe8;
+            border: 2px dashed #b8afa4;
+            border-radius: 20px;
+        }
+
+        /* 可愛按鈕風格 */
+        .btn-cute-primary {
+            background-color: #7bb5aa;
+            border: 2px solid #4a4741;
+            color: #ffffff;
+            box-shadow: 0 5px 0 #578b81;
+            transition: all 0.1s ease;
+        }
+        .btn-cute-primary:hover {
+            transform: translateY(2px);
+            box-shadow: 0 3px 0 #578b81;
+        }
+        .btn-cute-primary:active {
+            transform: translateY(5px);
+            box-shadow: 0 0px 0 #578b81;
+        }
+
+        .btn-cute-secondary {
+            background-color: #f7a972;
+            border: 2px solid #4a4741;
+            color: #ffffff;
+            box-shadow: 0 5px 0 #c27c4a;
+            transition: all 0.1s ease;
+        }
+        .btn-cute-secondary:hover {
+            transform: translateY(2px);
+            box-shadow: 0 3px 0 #c27c4a;
+        }
+
+        .btn-cute-purple {
+            background-color: #a393eb;
+            border: 2px solid #4a4741;
+            color: #ffffff;
+            box-shadow: 0 5px 0 #7968c7;
+        }
+
+        .btn-cute-light {
+            background-color: #ffffff;
+            border: 2px solid #6b635b;
+            color: #4a4741;
+            box-shadow: 0 4px 0 #d0c8be;
+        }
+
+        /* 花色專用柔和色卡 */
+        .badge-spade { background-color: #e0f2fe; color: #0284c7; border: 2px solid #38bdf8; }
+        .badge-heart { background-color: #ffe4e6; color: #e11d48; border: 2px solid #fb7185; }
+        .badge-diamond { background-color: #fef3c7; color: #d97706; border: 2px solid #fbbf24; }
+        .badge-club { background-color: #dcfce7; color: #16a34a; border: 2px solid #4ade80; }
+
+        /* 可愛木夾裝飾 */
+        .clip-deco {
+            position: absolute;
+            top: -12px;
+            left: 24px;
+            width: 16px;
+            height: 32px;
+            background-color: #e6c894;
+            border: 2px solid #4a4741;
+            border-radius: 4px;
+            z-index: 20;
+        }
+        .clip-deco::after {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 2px;
+            width: 8px;
+            height: 2px;
+            background-color: #4a4741;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #e2ece9; }
+        ::-webkit-scrollbar-thumb { background: #b8afa4; border-radius: 10px; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header Navigation -->
+    <header class="bg-[#fcfbfa] border-b-4 border-[#6b635b] sticky top-0 z-50 py-2.5 px-4 shadow-sm">
+        <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-2">
+            <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 bg-[#ffe8d6] border-2 border-[#4a4741] rounded-2xl flex items-center justify-center shadow-[0_4px_0_#d8b49c]">
+                    <!-- Cute Earth SVG Illustration -->
+                    <svg class="w-8 h-8 text-[#587b73]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 002 2h1.5a2.5 2.5 0 002.5-2.5V11a2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-black tracking-wide text-[#4a4741] flex items-center gap-1.5">
+                        <span data-i18n="appTitle">世界聯盟</span> <span data-i18n="appBadge" class="text-xs px-2 py-0.5 bg-[#f7a972] text-white rounded-full font-bold">小學教育版</span>
+                    </h1>
+                    <p data-i18n="appSubtitle" class="text-xs text-[#8c8275] font-medium">國際社會交流、資源談判與跨國合作助手</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-2 sm:space-x-3 flex-wrap gap-y-2">
+                <!-- Language Selector -->
+                <div class="flex items-center bg-[#f4efe8] border-2 border-[#6b635b] rounded-xl px-2 py-1">
+                    <i class="fa-solid fa-globe text-[#7bb5aa] mr-1.5 text-xs"></i>
+                    <select id="language-select" class="bg-transparent text-xs font-bold text-[#4a4741] focus:outline-none cursor-pointer">
+                        <option value="zh-TW" selected>繁體中文</option>
+                        <option value="en">English</option>
+                        <option value="ja">日本語</option>
+                        <option value="ko">한국어</option>
+                    </select>
+                </div>
+
+                <span id="game-status-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-[#f4efe8] text-[#6b635b] border-2 border-[#b8afa4]">
+                    <i class="fa-solid fa-cookie mr-1 text-[#f7a972]"></i> <span data-i18n="statusNotStarted">未開始遊戲</span>
+                </span>
+                <button id="reset-game-btn" class="px-3 py-1.5 text-xs bg-[#f87171] hover:bg-[#ef4444] text-white font-bold border-2 border-[#4a4741] rounded-xl shadow-[0_3px_0_#991b1b] transition">
+                    <i class="fa-solid fa-rotate-right mr-1"></i> <span data-i18n="resetBtn">重置對局</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left Column: Setup & Player Leaderboard (4 cols) -->
+        <section class="lg:col-span-4 space-y-6">
+            
+            <!-- Setup Card -->
+            <div id="setup-card" class="cute-card p-5 relative">
+                <div class="clip-deco"></div>
+                <h2 class="text-lg font-black text-[#4a4741] mb-4 flex items-center pt-2">
+                    <i class="fa-solid fa-paw text-[#f7a972] mr-2"></i> <span data-i18n="setupTitle">遊戲設定 (3~6人)</span>
+                </h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label data-i18n="playerCountLabel" class="block text-xs font-bold text-[#6b635b] mb-1">國家玩家人數</label>
+                        <select id="player-count-select" class="w-full bg-[#f4efe8] border-2 border-[#6b635b] rounded-xl px-3 py-2 text-sm font-bold focus:outline-none text-[#4a4741]">
+                            <option value="3" data-i18n="opt3">3 個國家</option>
+                            <option value="4" selected data-i18n="opt4">4 個國家</option>
+                            <option value="5" data-i18n="opt5">5 個國家</option>
+                            <option value="6" data-i18n="opt6">6 個國家</option>
+                        </select>
+                    </div>
+
+                    <div id="player-names-inputs" class="space-y-2">
+                        <!-- Dynamic inputs created by JS -->
+                    </div>
+
+                    <button id="start-game-btn" class="w-full py-3 btn-cute-primary font-black rounded-2xl text-base shadow-md transition duration-200">
+                        <i class="fa-solid fa-play mr-1.5"></i> <span data-i18n="startGameBtn">開啟冒險對局！</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Leaderboard / Scoreboard Card -->
+            <div id="scoreboard-card" class="cute-card p-5 relative hidden">
+                <div class="clip-deco"></div>
+                <div class="flex justify-between items-center mb-4 pt-2">
+                    <h2 class="text-lg font-black text-[#4a4741] flex items-center">
+                        <i class="fa-solid fa-trophy text-[#f59e0b] mr-2"></i> <span data-i18n="leaderboardTitle">國際影響力榜</span>
+                    </h2>
+                    <span id="round-indicator" class="text-xs px-2.5 py-1 bg-[#ffe8d6] text-[#c27c4a] border-2 border-[#f7a972] rounded-xl font-black">
+                        第 1 / 5 輪
+                    </span>
+                </div>
+
+                <div id="leaderboard-list" class="space-y-2.5">
+                    <!-- Dynamic player score list -->
+                </div>
+
+                <!-- Reference Card Quick Guide -->
+                <div class="mt-5 pt-4 border-t-2 border-dashed border-[#b8afa4] text-xs text-[#6b635b] space-y-2">
+                    <p class="font-black text-[#4a4741] flex items-center">
+                        <i class="fa-solid fa-shapes text-[#7bb5aa] mr-1.5"></i> <span data-i18n="guideTitle">撲克牌資源可愛圖鑑：</span>
+                    </p>
+                    <div class="grid grid-cols-2 gap-2 pt-1 font-bold">
+                        <div class="flex items-center p-1.5 rounded-xl bg-[#e0f2fe] border border-[#38bdf8] text-[#0284c7]"><span class="mr-1.5 text-base">♠</span> <span data-i18n="suitSpadeGuide">黑桃：士兵</span></div>
+                        <div class="flex items-center p-1.5 rounded-xl bg-[#ffe4e6] border border-[#fb7185] text-[#e11d48]"><span class="mr-1.5 text-base">♥</span> <span data-i18n="suitHeartGuide">紅心：麵包</span></div>
+                        <div class="flex items-center p-1.5 rounded-xl bg-[#fef3c7] border border-[#fbbf24] text-[#d97706]"><span class="mr-1.5 text-base">♦</span> <span data-i18n="suitDiamondGuide">方塊：金幣</span></div>
+                        <div class="flex items-center p-1.5 rounded-xl bg-[#dcfce7] border border-[#4ade80] text-[#16a34a]"><span class="mr-1.5 text-base">♣</span> <span data-i18n="suitClubGuide">梅花：電池</span></div>
+                    </div>
+                    <p data-i18n="pointsNote" class="text-[11px] text-[#8c8275] pt-1">點數計算：A=1, 2~10為面值, J=11, Q=12, K=13。</p>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Right Column: Game Event Generator & Inspector (8 cols) -->
+        <section class="lg:col-span-8 space-y-6">
+
+            <!-- Turn Action Bar -->
+            <div id="turn-action-card" class="cute-card p-5 flex flex-wrap justify-between items-center gap-4 relative">
+                <div>
+                    <span data-i18n="currentTurnLabel" class="text-xs text-[#8c8275] font-bold block uppercase tracking-wider">當前行動國家</span>
+                    <h3 id="current-turn-player" class="text-xl font-black text-[#587b73] flex items-center gap-2">
+                        <i class="fa-solid fa-flag"></i> <span data-i18n="waitingSetup">請先設定玩家名稱並開始遊戲</span>
+                    </h3>
+                </div>
+
+                <div class="flex items-center gap-2 flex-wrap">
+                    <button id="draw-event-btn" disabled class="px-5 py-2.5 btn-cute-secondary font-black rounded-2xl text-sm disabled:opacity-50 transition">
+                        <i class="fa-solid fa-dice mr-1.5"></i> <span data-i18n="drawEventBtn">抽取事件卡</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Event Display Panel -->
+            <div id="event-display-panel" class="cute-card p-6 relative min-h-[420px] flex flex-col justify-between">
+                
+                <!-- Initial Empty State with Cute Illustration -->
+                <div id="event-empty-state" class="my-auto text-center py-8">
+                    <div class="w-24 h-24 mx-auto mb-3 rounded-full bg-[#ffe8d6] border-2 border-[#4a4741] flex items-center justify-center text-[#f7a972] shadow-[0_4px_0_#d8b49c]">
+                        <svg class="w-14 h-14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                        </svg>
+                    </div>
+                    <h4 data-i18n="emptyTitle" class="text-[#4a4741] font-black text-xl mb-1">準備好翻開事件卡了嗎？</h4>
+                    <p data-i18n="emptyDesc" class="text-[#8c8275] text-sm max-w-md mx-auto font-medium">點擊右上角「抽取事件卡」，隨機為您的國家挑戰國家建設或國際合作議題！</p>
+                </div>
+
+                <!-- Event Content Container -->
+                <div id="event-content" class="hidden space-y-5">
+                    
+                    <!-- Event Header: Type & Tag -->
+                    <div class="flex justify-between items-start gap-4">
+                        <div>
+                            <span id="event-type-badge" class="px-3 py-1 rounded-xl text-xs font-black border-2 inline-block mb-1.5">
+                                <!-- National or International -->
+                            </span>
+                            <h3 id="event-title" class="text-2xl font-black text-[#4a4741]">
+                                <!-- Title -->
+                            </h3>
+                        </div>
+                        <div class="text-right">
+                            <span data-i18n="hintLabel" class="text-xs text-[#8c8275] font-bold block">遊戲錦囊小提示</span>
+                            <span id="event-interaction-hint" class="text-xs font-bold text-[#587b73] bg-[#e2ece9] px-2.5 py-1 rounded-xl border border-[#7bb5aa] inline-block mt-1">
+                                <!-- Hint -->
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Event Description -->
+                    <p id="event-description" class="text-[#4a4741] text-sm font-medium leading-relaxed cute-inner-card p-4">
+                        <!-- Description -->
+                    </p>
+
+                    <!-- Required Resources Box -->
+                    <div>
+                        <h4 class="text-xs font-black uppercase text-[#6b635b] mb-2 flex items-center">
+                            <i class="fa-solid fa-basket-shopping text-[#f7a972] mr-1.5"></i> <span data-i18n="reqResourcesTitle">事件所需資源需求：</span>
+                        </h4>
+                        <div id="event-requirements-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <!-- Dynamic requirements -->
+                        </div>
+                    </div>
+
+                    <!-- Rewards & Penalties -->
+                    <div class="grid grid-cols-2 gap-3 text-xs pt-1">
+                        <div class="bg-[#dcfce7] border-2 border-[#4ade80] p-3 rounded-2xl">
+                            <span class="text-[#15803d] font-black block mb-1">
+                                <i class="fa-solid fa-circle-check mr-1"></i> <span data-i18n="rewardTitle">成功獎勵</span>
+                            </span>
+                            <p id="event-reward-text" class="text-[#374151] font-medium">獲得 0 影響力，補充抽牌 0 張。</p>
+                        </div>
+                        <div class="bg-[#ffe4e6] border-2 border-[#fb7185] p-3 rounded-2xl">
+                            <span class="text-[#be123c] font-black block mb-1">
+                                <i class="fa-solid fa-circle-xmark mr-1"></i> <span data-i18n="penaltyTitle">失敗懲罰</span>
+                            </span>
+                            <p id="event-penalty-text" class="text-[#374151] font-medium">扣除 0 影響力，投入的牌棄置。</p>
+                        </div>
+                    </div>
+
+                    <!-- Negotiation / Resolution Action Console -->
+                    <div class="pt-2">
+                        <div class="cute-inner-card p-3 sm:p-4 space-y-3">
+                            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
+                                <h4 class="text-sm font-black text-[#4a4741] flex items-center">
+                                    <i class="fa-solid fa-calculator text-[#7bb5aa] mr-1.5"></i> <span data-i18n="calcTitle">資源投入與結算計算器</span>
+                                </h4>
+                                <span data-i18n="calcSubtitle" class="text-[11px] text-[#8c8275] font-bold">填入玩家實際出的撲克牌總點數</span>
+                            </div>
+
+                            <!-- Participating / Assisting Countries Selector -->
+                            <div id="participating-countries-selector" class="space-y-1.5">
+                                <label id="participant-selector-label" class="block text-xs font-bold text-[#6b635b]">選擇參與/合作的國家（可多選）：</label>
+                                <div id="participant-checkboxes" class="flex flex-wrap gap-2">
+                                    <!-- Dynamic checkboxes -->
+                                </div>
+                            </div>
+
+                            <!-- Share reward setting for National Events assisting players -->
+                            <div id="assist-reward-setting" class="hidden bg-[#ffffff] p-2.5 rounded-xl border-2 border-[#b8afa4] space-y-2">
+                                <label class="block text-xs font-bold text-[#587b73]">
+                                    <i class="fa-solid fa-handshake-angle mr-1"></i> <span data-i18n="assistSettingTitle">支援回報設定（國家個別事件）：</span>
+                                </label>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                                    <div>
+                                        <span data-i18n="assistShareLabel" class="text-[#6b635b] font-bold">分享給協助國總分數：</span>
+                                        <input type="number" id="assist-share-score" min="0" step="1" value="0" class="w-full mt-1 bg-[#f4efe8] border-2 border-[#6b635b] rounded-lg px-2 py-1 font-black text-[#4a4741] focus:outline-none focus:border-[#7bb5aa]" placeholder="0">
+                                    </div>
+                                    <div class="text-[11px] text-[#8c8275] font-medium flex items-center">
+                                        <p data-i18n="assistShareDesc">若有其他國家提供支援，可約定分配部分影響力獎勵（請輸入整數，平分後的統計分數最多計算至小數點第1位）。</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Resource Inputs -->
+                            <div id="resource-input-fields" class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                                <!-- Inputs dynamically styled for suits -->
+                            </div>
+
+                            <!-- Submit Result Buttons -->
+                            <div class="flex items-center justify-end pt-2">
+                                <button id="submit-event-btn" class="w-full sm:w-auto px-6 py-2.5 btn-cute-primary font-black text-sm rounded-2xl shadow-md transition">
+                                    <i class="fa-solid fa-check-double mr-1"></i> <span data-i18n="submitEventBtn">判定並記錄結果</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer data-i18n="footerText" class="py-4 mt-6 text-center text-xs text-[#8c8275] font-bold">
+        《世界聯盟》國際社會合作議題桌上遊戲專用輔助軟體 | 國小高年級社會科教育設計
+    </footer>
+
+    <!-- Result Modal (Victory/Fail Feedback) -->
+    <div id="result-modal" class="fixed inset-0 bg-[#4a4741]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="cute-card max-w-md w-full p-6 text-center space-y-4 transform transition-all scale-100 bg-[#fcfbfa] relative">
+            <div id="modal-icon-container" class="w-20 h-20 mx-auto rounded-full flex items-center justify-center text-4xl border-3 border-[#4a4741]">
+                <!-- Icon -->
+            </div>
+            
+            <h3 id="modal-title" class="text-2xl font-black"></h3>
+            
+            <p id="modal-body" class="text-sm text-[#4a4741] font-medium leading-relaxed bg-[#f4efe8] p-3 rounded-xl border-2 border-dashed border-[#b8afa4]"></p>
+
+            <div id="modal-impact-breakdown" class="bg-[#ffffff] p-3 rounded-xl border-2 border-[#6b635b] text-xs text-left space-y-1">
+                <!-- Breakdown -->
+            </div>
+
+            <button id="modal-close-btn" class="w-full py-2.5 btn-cute-primary font-black text-sm rounded-2xl shadow-md transition">
+                <span data-i18n="modalNextBtn">確定並前往下一個回合</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Final Winner Modal -->
+    <div id="winner-modal" class="fixed inset-0 bg-[#4a4741]/70 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="cute-card max-w-lg w-full p-8 text-center space-y-5 bg-[#fcfbfa] relative">
+            <div class="w-20 h-20 mx-auto rounded-full bg-[#fef3c7] border-3 border-[#4a4741] flex items-center justify-center text-[#d97706] text-4xl shadow-[0_4px_0_#fbbf24]">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+
+            <div>
+                <span data-i18n="gameOverBadge" class="text-xs font-black text-[#c27c4a] bg-[#ffe8d6] px-3 py-1 rounded-full border border-[#f7a972]">五輪遊戲順利結束</span>
+                <h2 data-i18n="championTitle" class="text-2xl font-black text-[#4a4741] mt-2">🎉 國際影響力冠軍誕生！</h2>
+            </div>
+
+            <div id="winner-display" class="bg-[#fef3c7] p-4 rounded-2xl border-2 border-[#fbbf24]">
+                <!-- Winner info -->
+            </div>
+
+            <div id="final-ranking-list" class="text-left text-xs space-y-2 max-h-48 overflow-y-auto pr-1">
+                <!-- Final Rank -->
+            </div>
+
+            <p data-i18n="endingQuote" class="text-xs text-[#8c8275] font-bold italic">
+                「在國際社會中，獨木不成林。不論影響力分數高低，每個國家都在交流與合作中展現了關鍵價值！」
+            </p>
+
+            <button onclick="location.reload()" class="w-full py-3 btn-cute-secondary font-black rounded-2xl text-base shadow-md transition">
+                <span data-i18n="restartBtn">重新展開新對局</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script>
+        // Multi-language Dictionary (Default: zh-TW)
+        let currentLang = 'zh-TW';
+
+        const I18N = {
+            'zh-TW': {
+                appTitle: "世界聯盟",
+                appBadge: "小學教育版",
+                appSubtitle: "國際社會交流、資源談判與跨國合作助手",
+                statusNotStarted: "未開始遊戲",
+                statusPlaying: "對局進行中",
+                resetBtn: "重置對局",
+                setupTitle: "遊戲設定 (3~6人)",
+                playerCountLabel: "國家玩家人數",
+                opt3: "3 個國家", opt4: "4 個國家", opt5: "5 個國家", opt6: "6 個國家",
+                countryLabel: "國家",
+                countryPlaceholder: "輸入國家名稱",
+                defaultCountries: ["美洲王國", "歐洲兔兔", "亞洲熊熊", "非洲小象", "澳洲無尾熊", "企鵝陣線"],
+                startGameBtn: "開啟冒險對局！",
+                leaderboardTitle: "國際影響力榜",
+                roundFormat: (cur, max) => `第 ${cur} / ${max} 輪`,
+                turnsCompletedFormat: (done, max) => `(已完成 ${done}/${max} 回合)`,
+                actingBadge: "行動中",
+                impactLabel: "影響力:",
+                guideTitle: "撲克牌資源可愛圖鑑：",
+                suitSpadeGuide: "黑桃：士兵",
+                suitHeartGuide: "紅心：麵包",
+                suitDiamondGuide: "方塊：金幣",
+                suitClubGuide: "梅花：電池",
+                pointsNote: "點數計算：A=1, 2~10為面值, J=11, Q=12, K=13。",
+                currentTurnLabel: "當前行動國家",
+                waitingSetup: "請先設定玩家名稱並開始遊戲",
+                drawEventBtn: "抽取事件卡",
+                aiEventBtn: "AI 生成新事件",
+                aiGenerating: "生成中...",
+                emptyTitle: "準備好翻開事件卡了嗎？",
+                emptyDesc: "點擊右上角「抽取事件卡」，隨機為您的國家挑戰國家建設或國際合作議題！",
+                hintLabel: "遊戲錦囊小提示",
+                reqResourcesTitle: "事件所需資源需求：",
+                targetNeed: "目標需求",
+                unitPoint: "點",
+                rewardTitle: "成功獎勵",
+                penaltyTitle: "失敗懲罰",
+                rewardNational: (imp, cards) => `成功可獲得 +${imp} 點影響力，並可自牌堆補充抽牌 ${cards} 張。`,
+                rewardIntl: (imp, cards) => `成功可獲得總計 ${imp} 點影響力（將由所有參與國平分），並各補充抽牌 ${cards} 張。`,
+                penaltyText: (pen) => `失敗扣除 ${Math.abs(pen)} 影響力，且投入卡牌必須棄置。`,
+                calcTitle: "資源投入與結算計算器",
+                calcSubtitle: "填入玩家實際出的撲克牌總點數",
+                selectAssistLabel: "選擇提供資源支援的國家（若無可不選）：",
+                selectIntlLabel: "選擇共同參與的國家（至少需2國）：",
+                selfTag: "(本國)",
+                helperTag: "(支援國)",
+                assistSettingTitle: "支援回報設定（國家個別事件）：",
+                assistShareLabel: "分享給協助國總分數：",
+                assistShareDesc: "若有其他國家提供支援，可約定分配部分影響力獎勵（請輸入整數，平分後的統計分數最多計算至小數點第1位）。",
+                needFormat: (val) => `需要: ${val}`,
+                submitEventBtn: "判定並記錄結果",
+                footerText: "《世界聯盟》國際社會合作議題桌上遊戲專用輔助軟體 | 國小高年級社會科教育設計",
+                confirmReset: "確定要重置遊戲嗎？目前的得分與進度將會清除。",
+                alertIntlMin: "「國際共同事件」必須至少有 2 個國家共同參與投入資源才能結算！請勾選合作的夥伴國家。",
+                alertAiFail: "AI 生成事件時發生問題，將自動轉為抽取預設事件卡！",
+                modalSuccessTitle: "任務成功完成！",
+                modalFailTitle: "任務遺憾失敗！",
+                modalNationalAssist: (name, title, initGain, assistGain) => `${name} 在夥伴國協助下完成「${title}」！本國獲得 +${initGain} 點影響力；協助國每國分得 +${assistGain} 點影響力。`,
+                modalNationalSolo: (name, title, initGain, cards) => `太棒了！${name} 順利獨力解決「${title}」！獲得 +${initGain} 點國際影響力，並可補充 ${cards} 張卡牌。`,
+                modalIntlSuccess: (names, title, totalImp, count, shareImp, cards) => `跨國合作順利！參與國家（${names}）共同完成「${title}」。總獎勵 ${totalImp} 點由 ${count} 國平分，每國獲得 +${shareImp} 點影響力，並可補充 ${cards} 張卡牌！`,
+                modalFailBody: (names, pen) => `點數離目標還差一點點！參與/協助國家（${names}）未能成功處理解局，依規定扣除 ${Math.abs(pen)} 點影響力，本次投入卡牌必須棄置。`,
+                breakdownHeader: "點數檢核明細：",
+                modalNextBtn: "確定並前往下一個回合",
+                gameOverBadge: "五輪遊戲順利結束",
+                championTitle: "🎉 國際影響力冠軍誕生！",
+                highestImpact: "🏆 國際影響力最高者",
+                finalRankHeader: "最終排名統計：",
+                rankFormat: (r) => `第 ${r} 名`,
+                endingQuote: "「在國際社會中，獨木不成林。不論影響力分數高低，每個國家都在交流與合作中展現了關鍵價值！」",
+                restartBtn: "重新展開新對局",
+                suits: { spade: "士兵", heart: "麵包", diamond: "金幣", club: "電池" },
+                typeNational: "國家個別事件",
+                typeIntl: "國際共同事件",
+                aiPromptLang: "繁體中文"
+            },
+            'en': {
+                appTitle: "World Alliance",
+                appBadge: "Kids Edition",
+                appSubtitle: "Global Cooperation, Resource Negotiation & Diplomacy Helper",
+                statusNotStarted: "Not Started",
+                statusPlaying: "In Progress",
+                resetBtn: "Reset",
+                setupTitle: "Game Setup (3-6 Players)",
+                playerCountLabel: "Number of Countries",
+                opt3: "3 Countries", opt4: "4 Countries", opt5: "5 Countries", opt6: "6 Countries",
+                countryLabel: "Country",
+                countryPlaceholder: "Enter country name",
+                defaultCountries: ["Americas", "Euro Bunnies", "Asia Bears", "Africa Elephants", "Aussie Koalas", "Penguin Front"],
+                startGameBtn: "Start Adventure!",
+                leaderboardTitle: "Influence Leaderboard",
+                roundFormat: (cur, max) => `Round ${cur} / ${max}`,
+                turnsCompletedFormat: (done, max) => `(${done}/${max} turns done)`,
+                actingBadge: "Active",
+                impactLabel: "Influence:",
+                guideTitle: "Card Resource Guide:",
+                suitSpadeGuide: "Spade: Soldier",
+                suitHeartGuide: "Heart: Bread",
+                suitDiamondGuide: "Diamond: Coin",
+                suitClubGuide: "Club: Battery",
+                pointsNote: "Values: A=1, 2~10=Face, J=11, Q=12, K=13.",
+                currentTurnLabel: "Current Country Turn",
+                waitingSetup: "Please setup countries and start the game",
+                drawEventBtn: "Draw Event Card",
+                aiEventBtn: "AI Generate Event",
+                aiGenerating: "Generating...",
+                emptyTitle: "Ready to draw an Event Card?",
+                emptyDesc: "Click 'Draw Event Card' to face domestic challenges or global cooperation missions!",
+                hintLabel: "Strategy Tip",
+                reqResourcesTitle: "Required Resources:",
+                targetNeed: "Target",
+                unitPoint: "pts",
+                rewardTitle: "Success Reward",
+                penaltyTitle: "Failure Penalty",
+                rewardNational: (imp, cards) => `Gain +${imp} Influence and draw ${cards} resource card(s).`,
+                rewardIntl: (imp, cards) => `Gain ${imp} total Influence (split equally among participants) and draw ${cards} card(s) each.`,
+                penaltyText: (pen) => `Lose ${Math.abs(pen)} Influence and discard played cards.`,
+                calcTitle: "Resource & Score Calculator",
+                calcSubtitle: "Enter total card points played",
+                selectAssistLabel: "Select assisting countries (optional):",
+                selectIntlLabel: "Select participating countries (at least 2):",
+                selfTag: "(Host)",
+                helperTag: "(Ally)",
+                assistSettingTitle: "Ally Reward Sharing (National Event):",
+                assistShareLabel: "Total Influence shared with allies:",
+                assistShareDesc: "Enter an integer to share with helpers (split equally, rounded to 1 decimal place).",
+                needFormat: (val) => `Need: ${val}`,
+                submitEventBtn: "Resolve & Record Result",
+                footerText: "World Alliance Board Game Digital Companion | Elementary Social Studies Education",
+                confirmReset: "Reset the game? Current scores and progress will be lost.",
+                alertIntlMin: "International Events require at least 2 participating countries! Please select partner countries.",
+                alertAiFail: "AI event generation failed. Drawing a preset event card instead!",
+                modalSuccessTitle: "Mission Accomplished!",
+                modalFailTitle: "Mission Failed!",
+                modalNationalAssist: (name, title, initGain, assistGain) => `${name} completed "${title}" with allies! Host gains +${initGain} Influence; each ally gains +${assistGain} Influence.`,
+                modalNationalSolo: (name, title, initGain, cards) => `Awesome! ${name} solved "${title}" solo! Gained +${initGain} Influence and draw ${cards} card(s).`,
+                modalIntlSuccess: (names, title, totalImp, count, shareImp, cards) => `Great teamwork! (${names}) solved "${title}". ${totalImp} Influence split among ${count} countries (+${shareImp} each), plus draw ${cards} card(s)!`,
+                modalFailBody: (names, pen) => `Not quite enough points! (${names}) failed to resolve the event. Deducted ${Math.abs(pen)} Influence and played cards are discarded.`,
+                breakdownHeader: "Points Breakdown:",
+                modalNextBtn: "Confirm & Next Turn",
+                gameOverBadge: "5 Rounds Completed",
+                championTitle: "🎉 Global Influence Champion!",
+                highestImpact: "🏆 Highest Global Influence",
+                finalRankHeader: "Final Standings:",
+                rankFormat: (r) => `#${r}`,
+                endingQuote: "\"No country is an island. Every nation plays a vital role through exchange and cooperation!\"",
+                restartBtn: "Play Again",
+                suits: { spade: "Soldier", heart: "Bread", diamond: "Coin", club: "Battery" },
+                typeNational: "National Event",
+                typeIntl: "International Event",
+                aiPromptLang: "English"
+            },
+            'ja': {
+                appTitle: "ワールド・アライアンス",
+                appBadge: "小学生教育版",
+                appSubtitle: "国際交流・資源交渉・グローバル協力アシスタント",
+                statusNotStarted: "未開始",
+                statusPlaying: "プレイ中",
+                resetBtn: "リセット",
+                setupTitle: "ゲーム設定 (3〜6人)",
+                playerCountLabel: "参加する国の数",
+                opt3: "3 カ国", opt4: "4 カ国", opt5: "5 カ国", opt6: "6 カ国",
+                countryLabel: "国",
+                countryPlaceholder: "国名を入力",
+                defaultCountries: ["アメリカ王国", "ユーロうさぎ", "アジアくま", "アフリカぞう", "オージーコアラ", "ペンギン連合"],
+                startGameBtn: "冒険をスタート！",
+                leaderboardTitle: "国際影響力ランキング",
+                roundFormat: (cur, max) => `第 ${cur} / ${max} ラウンド`,
+                turnsCompletedFormat: (done, max) => `(${done}/${max} ターン完了)`,
+                actingBadge: "行動中",
+                impactLabel: "影響力:",
+                guideTitle: "トランプ資源ガイド：",
+                suitSpadeGuide: "スペード：兵士",
+                suitHeartGuide: "ハート：パン",
+                suitDiamondGuide: "ダイヤ：コイン",
+                suitClubGuide: "クラブ：電池",
+                pointsNote: "ポイント計算：A=1, 2〜10=数字通り, J=11, Q=12, K=13",
+                currentTurnLabel: "現在の行動国",
+                waitingSetup: "国名を設定してゲームを開始してください",
+                drawEventBtn: "イベントを引く",
+                aiEventBtn: "AIで新規作成",
+                aiGenerating: "作成中...",
+                emptyTitle: "イベントカードを引く準備はいいですか？",
+                emptyDesc: "「イベントを引く」を押して、国内問題や国際協力ミッションに挑戦しよう！",
+                hintLabel: "攻略のヒント",
+                reqResourcesTitle: "必要な資源ポイント：",
+                targetNeed: "目標",
+                unitPoint: "pt",
+                rewardTitle: "成功ボーナス",
+                penaltyTitle: "失敗ペナルティ",
+                rewardNational: (imp, cards) => `影響力 +${imp} を獲得し、カードを ${cards} 枚補充します。`,
+                rewardIntl: (imp, cards) => `合計 ${imp} の影響力を参加国で均等に山分けし、各自カードを ${cards} 枚補充します。`,
+                penaltyText: (pen) => `影響力 -${Math.abs(pen)} を失い、出したカードは捨て札になります。`,
+                calcTitle: "資源投入・精算カリキュレーター",
+                calcSubtitle: "出したトランプの合計ポイントを入力",
+                selectAssistLabel: "支援してくれた国を選択（任意）：",
+                selectIntlLabel: "共同参加する国を選択（2カ国以上）：",
+                selfTag: "(自国)",
+                helperTag: "(支援国)",
+                assistSettingTitle: "支援報酬の設定（国内イベント）：",
+                assistShareLabel: "支援国に分ける合計ポイント：",
+                assistShareDesc: "支援国に分け与える影響力を整数で入力（均等割り後、小数第1位まで計算）。",
+                needFormat: (val) => `必要: ${val}`,
+                submitEventBtn: "判定して記録する",
+                footerText: "『ワールド・アライアンス』国際協力ボードゲーム補助ツール | 小学校高学年社会科教材",
+                confirmReset: "ゲームをリセットしますか？現在のスコアと進行状況は消去されます。",
+                alertIntlMin: "「国際共同イベント」は2カ国以上の参加が必要です！協力する国を選択してください。",
+                alertAiFail: "AIイベントの生成に失敗しました。標準イベントカードを引きます！",
+                modalSuccessTitle: "ミッション成功！",
+                modalFailTitle: "ミッション失敗…",
+                modalNationalAssist: (name, title, initGain, assistGain) => `${name} は支援国と協力して「${title}」を解決！自国は +${initGain}、支援国は1カ国あたり +${assistGain} の影響力を獲得！`,
+                modalNationalSolo: (name, title, initGain, cards) => `すごい！${name} は単独で「${title}」を解決！影響力 +${initGain} を獲得し、カードを ${cards} 枚補充！`,
+                modalIntlSuccess: (names, title, totalImp, count, shareImp, cards) => `国際協力成功！（${names}）が「${title}」を解決！報酬 ${totalImp} を ${count} カ国で山分け（1カ国 +${shareImp}）、カード ${cards} 枚補充！`,
+                modalFailBody: (names, pen) => `ポイントが足りませんでした…（${names}）は解決に失敗し、影響力 ${Math.abs(pen)} を失いました。出したカードは破棄されます。`,
+                breakdownHeader: "ポイント確認明細：",
+                modalNextBtn: "確定して次のターンへ",
+                gameOverBadge: "全5ラウンド終了",
+                championTitle: "🎉 国際影響力チャンピオン決定！",
+                highestImpact: "🏆 最高国際影響力",
+                finalRankHeader: "最終ランキング：",
+                rankFormat: (r) => `第 ${r} 位`,
+                endingQuote: "「国際社会では一国だけでは成り立ちません。すべての国が交流と協力の中で大切な役割を果たしました！」",
+                restartBtn: "新しいゲームを始める",
+                suits: { spade: "兵士", heart: "パン", diamond: "コイン", club: "電池" },
+                typeNational: "国内個別イベント",
+                typeIntl: "国際共同イベント",
+                aiPromptLang: "日本語"
+            },
+            'ko': {
+                appTitle: "월드 얼라이언스",
+                appBadge: "초등 교육용",
+                appSubtitle: "국제 사회 교류, 자원 협상 및 글로벌 협력 도우미",
+                statusNotStarted: "게임 시작 전",
+                statusPlaying: "게임 진행 중",
+                resetBtn: "초기화",
+                setupTitle: "게임 설정 (3~6명)",
+                playerCountLabel: "참여 국가 수",
+                opt3: "3개 국가", opt4: "4개 국가", opt5: "5개 국가", opt6: "6개 국가",
+                countryLabel: "국가",
+                countryPlaceholder: "국가 이름 입력",
+                defaultCountries: ["아메리카 왕국", "유럽 토끼", "아시아 곰돌이", "아프리카 코끼리", "호주 코알라", "펭귄 연합"],
+                startGameBtn: "모험 시작하기!",
+                leaderboardTitle: "국제 영향력 순위",
+                roundFormat: (cur, max) => `${cur} / ${max} 라운드`,
+                turnsCompletedFormat: (done, max) => `(${done}/${max} 턴 완료)`,
+                actingBadge: "행동 중",
+                impactLabel: "영향력:",
+                guideTitle: "트럼프 카드 자원 도감:",
+                suitSpadeGuide: "스페이드: 병사",
+                suitHeartGuide: "하트: 빵",
+                suitDiamondGuide: "다이아: 금화",
+                suitClubGuide: "클로버: 배터리",
+                pointsNote: "점수 계산: A=1, 2~10=숫자 그대로, J=11, Q=12, K=13",
+                currentTurnLabel: "현재 행동 국가",
+                waitingSetup: "국가 이름을 설정하고 게임을 시작하세요",
+                drawEventBtn: "이벤트 뽑기",
+                aiEventBtn: "AI 새 이벤트 생성",
+                aiGenerating: "생성 중...",
+                emptyTitle: "이벤트 카드를 뽑을 준비가 되었나요?",
+                emptyDesc: "오른쪽 위의 '이벤트 뽑기'를 눌러 국가 건설이나 국제 협력 미션에 도전하세요!",
+                hintLabel: "게임 전략 팁",
+                reqResourcesTitle: "필요한 자원 요구량:",
+                targetNeed: "목표",
+                unitPoint: "점",
+                rewardTitle: "성공 보상",
+                penaltyTitle: "실패 페널티",
+                rewardNational: (imp, cards) => `성공 시 영향력 +${imp}점 획득 및 카드 ${cards}장 보충.`,
+                rewardIntl: (imp, cards) => `성공 시 총 ${imp}점의 영향력을 참여 국가끼리 똑같이 나누고, 각자 카드 ${cards}장 보충.`,
+                penaltyText: (pen) => `실패 시 영향력 ${Math.abs(pen)}점 차감 및 사용한 카드 버리기.`,
+                calcTitle: "자원 투입 및 정산 계산기",
+                calcSubtitle: "실제로 낸 카드의 총 점수를 입력하세요",
+                selectAssistLabel: "자원을 지원해 준 국가 선택 (없으면 미선택):",
+                selectIntlLabel: "함께 참여하는 국가 선택 (최소 2개국):",
+                selfTag: "(본국)",
+                helperTag: "(지원국)",
+                assistSettingTitle: "지원 보상 설정 (국가 개별 이벤트):",
+                assistShareLabel: "지원국에 나눌 총 점수:",
+                assistShareDesc: "지원해 준 국가에 나눌 영향력을 정수로 입력하세요 (균등 분배 후 소수점 첫째 자리까지 계산).",
+                needFormat: (val) => `필요: ${val}`,
+                submitEventBtn: "판정 및 결과 기록",
+                footerText: "《월드 얼라이언스》 국제 협력 보드게임 전용 디지털 도우미 | 초등 고학년 사회과 교육 설계",
+                confirmReset: "게임을 초기화할까요? 현재 점수와 진행 상황이 사라집니다.",
+                alertIntlMin: "'국제 공동 이벤트'는 최소 2개 국가가 함께 참여해야 합니다! 협력할 국가를 선택해 주세요.",
+                alertAiFail: "AI 이벤트 생성 중 오류가 발생하여 기본 이벤트 카드를 뽑습니다!",
+                modalSuccessTitle: "미션 성공!",
+                modalFailTitle: "미션 실패!",
+                modalNationalAssist: (name, title, initGain, assistGain) => `${name} 국가가 지원국과 협력하여 '${title}' 해결! 본국 +${initGain}점, 지원국당 +${assistGain}점의 영향력 획득!`,
+                modalNationalSolo: (name, title, initGain, cards) => `훌륭합니다! ${name} 국가가 단독으로 '${title}' 해결! 영향력 +${initGain}점 획득 및 카드 ${cards}장 보충!`,
+                modalIntlSuccess: (names, title, totalImp, count, shareImp, cards) => `국제 협력 성공! 참여 국가(${names})가 '${title}' 해결! 총 보상 ${totalImp}점을 ${count}개국이 나누어 각 +${shareImp}점 획득, 카드 ${cards}장 보충!`,
+                modalFailBody: (names, pen) => `목표 점수에 조금 부족했습니다! 참여/지원 국가(${names})가 해결에 실패하여 영향력 ${Math.abs(pen)}점이 차감되고 카드는 버려집니다.`,
+                breakdownHeader: "점수 확인 내역:",
+                modalNextBtn: "확인 및 다음 턴으로 이동",
+                gameOverBadge: "5라운드 게임 종료",
+                championTitle: "🎉 국제 영향력 챔피언 탄생!",
+                highestImpact: "🏆 최고 국제 영향력",
+                finalRankHeader: "최종 순위 통계:",
+                rankFormat: (r) => `${r}위`,
+                endingQuote: "\"국제 사회에서 혼자서는 설 수 없습니다. 모든 국가가 교류와 협력을 통해 소중한 가치를 보여주었습니다!\"",
+                restartBtn: "새 게임 다시 시작하기",
+                suits: { spade: "병사", heart: "빵", diamond: "금화", club: "배터리" },
+                typeNational: "국가 개별 이벤트",
+                typeIntl: "국제 공동 이벤트",
+                aiPromptLang: "한국어"
+            }
+        };
+
+        // Localized Base Preset Events
+        const BASE_EVENTS_I18N = {
+            'zh-TW': [
+                {
+                    id: 1, title: "乾旱與糧食短缺危機", type: "national",
+                    description: "本國遭遇罕見極端乾旱，農作物收成銳減，人民急需糧食與生活物資。必須迅速調度物資與資金應對危機。",
+                    requirements: { heart: 12, diamond: 8 }, rewardImpact: 3, rewardCards: 2, penaltyImpact: -2,
+                    hint: "若手牌麵包(♥)不足，可以拿金幣(♦)或士兵(♠)牌向其他國家交換麵包！"
+                },
+                {
+                    id: 2, title: "區域公衛傳染病防護", type: "national",
+                    description: "鄰近區域爆發新型傳染病，本國急需升級醫療物資與防禦設施，並派出人員協助物資運送以保護國民健康。",
+                    requirements: { club: 10, heart: 8 }, rewardImpact: 3, rewardCards: 2, penaltyImpact: -2,
+                    hint: "電池(♣)能運作醫療科技裝備，缺麵包(♥)補給時可尋求夥伴國支援。"
+                },
+                {
+                    id: 3, title: "跨國網路安全攻擊防禦", type: "national",
+                    description: "國家主要金融與電力設施遭不明駭客襲擊，面臨嚴重癱瘓威脅。必須緊急動員防禦軍力與電力設備。",
+                    requirements: { spade: 12, club: 10 }, rewardImpact: 4, rewardCards: 2, penaltyImpact: -2,
+                    hint: "需要大量士兵(♠)警衛與電池(♣)運算裝備，可與鄰國達成合作來進行交換。"
+                },
+                {
+                    id: 4, title: "全球邊境氣候變遷與減碳協議", type: "international",
+                    description: "全球海平面上升威脅島國與沿海區域！各國必須發起共同減碳與新能源技術研發計畫，合力達成全球氣候目標。",
+                    requirements: { club: 18, diamond: 15 }, rewardImpact: 6, rewardCards: 3, penaltyImpact: -3,
+                    hint: "需要至少兩個國家合作！成功時影響力由參與國平分，請精算投入與效益！"
+                },
+                {
+                    id: 5, title: "海洋垃圾與塑膠微粒清理行動", type: "international",
+                    description: "國際公海堆積大規模塑膠垃圾，嚴重破壞海洋生態。需要多國共同出動清掃船隊與物資補給隊進行救援。",
+                    requirements: { heart: 16, spade: 10 }, rewardImpact: 4, rewardCards: 2, penaltyImpact: -2,
+                    hint: "參與國家平分成功獲得的影響力獎勵，合理評估投入人力。"
+                },
+                {
+                    id: 6, title: "國際跨國鐵路與物流樞紐建設", type: "international",
+                    description: "為了串聯多國貿易，計畫共同投資修建一條穿過多國邊境的自動化高速鐵路，大幅降低各國貨物運輸成本。",
+                    requirements: { diamond: 22, club: 12 }, rewardImpact: 8, rewardCards: 3, penaltyImpact: -4,
+                    hint: "大型經濟合作案！參與國家將平分 8 點影響力，找剛好的夥伴合作最划算。"
+                },
+                {
+                    id: 7, title: "國家產業自動化與AI升級", type: "national",
+                    description: "隨著人口老化，本國產業極需要導入自動化機器人與智慧設備，以維護國家經濟競爭力。",
+                    requirements: { club: 14, diamond: 10 }, rewardImpact: 4, rewardCards: 2, penaltyImpact: -2,
+                    hint: "著重電池(♣)能源與金幣(♦)之配合。"
+                },
+                {
+                    id: 8, title: "聯合人道主義地震救援處置", type: "international",
+                    description: "板塊交界區域發生規模強烈地震，釀成嚴重毀損。國際社會必須迅速組建聯合救難隊、載運糧食物資與賑災資金。",
+                    requirements: { heart: 20, spade: 10, diamond: 10 }, rewardImpact: 9, rewardCards: 3, penaltyImpact: -3,
+                    hint: "高難度事件！雖然分攤點數需求，但獎勵也會平分，考量合作的利弊！"
+                }
+            ],
+            'en': [
+                {
+                    id: 1, title: "Drought & Food Shortage Crisis", type: "national",
+                    description: "A severe drought has hit crop harvests. Citizens urgently need food and supplies. Mobilize resources and funds quickly.",
+                    requirements: { heart: 12, diamond: 8 }, rewardImpact: 3, rewardCards: 2, penaltyImpact: -2,
+                    hint: "Low on Bread (♥)? Trade Coins (♦) or Soldiers (♠) with other countries!"
+                },
+                {
+                    id: 2, title: "Regional Epidemic Defense", type: "national",
+                    description: "A new infectious disease broke out nearby. Upgrade medical equipment and deploy personnel to protect citizens.",
+                    requirements: { club: 10, heart: 8 }, rewardImpact: 3, rewardCards: 2, penaltyImpact: -2,
+                    hint: "Batteries (♣) power medical tech; ask allies for Bread (♥) if short."
+                },
+                {
+                    id: 3, title: "Cybersecurity Attack Defense", type: "national",
+                    description: "Major financial and power grids are under hacker attack. Mobilize defense forces and power equipment immediately.",
+                    requirements: { spade: 12, club: 10 }, rewardImpact: 4, rewardCards: 2, penaltyImpact: -2,
+                    hint: "Requires plenty of Soldiers (♠) and Batteries (♣). Trade with neighbors!"
+                },
+                {
+                    id: 4, title: "Global Climate & Carbon Pact", type: "international",
+                    description: "Rising sea levels threaten coastal nations! Launch a joint clean energy R&D plan to meet global climate goals.",
+                    requirements: { club: 18, diamond: 15 }, rewardImpact: 6, rewardCards: 3, penaltyImpact: -3,
+                    hint: "Requires at least 2 countries! Influence is split equally among participants."
+                },
+                {
+                    id: 5, title: "Ocean Plastic Cleanup Mission", type: "international",
+                    description: "Massive plastic waste threatens marine life in international waters. Deploy cleanup fleets and supply teams together.",
+                    requirements: { heart: 16, spade: 10 }, rewardImpact: 4, rewardCards: 2, penaltyImpact: -2,
+                    hint: "Participants split the Influence reward equally. Plan your contribution!"
+                },
+                {
+                    id: 6, title: "Transnational High-Speed Railway", type: "international",
+                    description: "Invest together to build an automated high-speed railway across borders to boost trade and cut shipping costs.",
+                    requirements: { diamond: 22, club: 12 }, rewardImpact: 8, rewardCards: 3, penaltyImpact: -4,
+                    hint: "Major economic project! 8 Influence will be split equally among partners."
+                },
+                {
+                    id: 7, title: "Industrial AI & Automation Upgrade", type: "national",
+                    description: "To counter an aging workforce, introduce automated robots and smart tech to keep the economy competitive.",
+                    requirements: { club: 14, diamond: 10 }, rewardImpact: 4, rewardCards: 2, penaltyImpact: -2,
+                    hint: "Focus on combining Battery (♣) energy and Coin (♦) investments."
+                },
+                {
+                    id: 8, title: "Joint Humanitarian Quake Relief", type: "international",
+                    description: "A massive earthquake struck a fault zone. Rapidly form international rescue teams with food and relief funds.",
+                    requirements: { heart: 20, spade: 10, diamond: 10 }, rewardImpact: 9, rewardCards: 3, penaltyImpact: -3,
+                    hint: "High difficulty! Costs are shared, but rewards are split equally too."
+                }
+            ],
+            'ja': [
+                {
+                    id: 1, title: "干ばつと食糧不足の危機", type: "national",
+                    description: "記録的な干ばつで作物が不作となり、国民が食糧や物資を必要としています。迅速に物資と資金を調達しましょう。",
+                    requirements: { heart: 12, diamond: 8 }, rewardImpact: 3, rewardCards: 2, penaltyImpact: -2,
+                    hint: "パン(♥)が足りない時は、コイン(♦)や兵士(♠)で他国と交換しよう！"
+                },
+                {
+                    id: 2, title: "地域の感染症対策プロジェクト", type: "national",
+                    description: "近隣地域で感染症が発生。医療機器の強化と物資輸送の人員を派遣し、国民の健康を守る必要があります。",
+                    requirements: { club: 10, heart: 8 }, rewardImpact: 3, rewardCards: 2, penaltyImpact: -2,
+                    hint: "電池(♣)で医療機器を動かし、パン(♥)が不足したら他国に支援を求めよう。"
+                },
+                {
+                    id: 3, title: "サイバー攻撃からのインフラ防衛", type: "national",
+                    description: "金融や電力システムがハッカーの攻撃を受け麻痺の危機に！防衛部隊と電力設備を緊急動員しましょう。",
+                    requirements: { spade: 12, club: 10 }, rewardImpact: 4, rewardCards: 2, penaltyImpact: -2,
+                    hint: "多くの兵士(♠)と電池(♣)が必要です。隣国と交渉して集めよう。"
+                },
+                {
+                    id: 4, title: "地球温暖化対策と脱炭素協定", type: "international",
+                    description: "海面上昇が島国や沿岸部を脅かしています！各国で協力し、新エネルギー技術の開発計画を進めましょう。",
+                    requirements: { club: 18, diamond: 15 }, rewardImpact: 6, rewardCards: 3, penaltyImpact: -3,
+                    hint: "2カ国以上の協力が必要！成功報酬の影響力は参加国で山分けになります。"
+                },
+                {
+                    id: 5, title: "海洋プラスチックごみ清掃作戦", type: "international",
+                    description: "公海に大量のプラスチックごみが堆積し海の生態系が危機に。多国籍の清掃船団と補給隊を出動させよう。",
+                    requirements: { heart: 16, spade: 10 }, rewardImpact: 4, rewardCards: 2, penaltyImpact: -2,
+                    hint: "参加国で成功報酬を均等に山分けします。出す資源のバランスを考えよう。"
+                },
+                {
+                    id: 6, title: "国際高速鉄道と物流ハブの建設", type: "international",
+                    description: "多国間の貿易をつなぐため、国境を越える自動高速鉄道を共同建設し、輸送コストを大幅に削減します。",
+                    requirements: { diamond: 22, club: 12 }, rewardImpact: 8, rewardCards: 3, penaltyImpact: -4,
+                    hint: "大型経済プロジェクト！影響力8点を参加国で山分けします。"
+                },
+                {
+                    id: 7, title: "国内産業のAI・自動化アップグレード", type: "national",
+                    description: "労働力不足を補うため、産業にロボットやスマート設備を導入し、国の経済競争力を高めます。",
+                    requirements: { club: 14, diamond: 10 }, rewardImpact: 4, rewardCards: 2, penaltyImpact: -2,
+                    hint: "電池(♣)エネルギーとコイン(♦)の組み合わせがカギです。"
+                },
+                {
+                    id: 8, title: "国際人道支援・大地震レスキュー", type: "international",
+                    description: "プレート境界で巨大地震が発生。国際社会で連合救助隊を結成し、食糧と義援金を急いで届けましょう。",
+                    requirements: { heart: 20, spade: 10, diamond: 10 }, rewardImpact: 9, rewardCards: 3, penaltyImpact: -3,
+                    hint: "高難易度イベント！負担を分担できますが、報酬も山分けになります。"
+                }
+            ],
+            'ko': [
+                {
+                    id: 1, title: "가뭄과 식량 부족 위기", type: "national",
+                    description: "극심한 가뭄으로 농작물 수확이 급감했습니다. 국민을 위해 식량과 자금을 신속하게 조달해야 합니다.",
+                    requirements: { heart: 12, diamond: 8 }, rewardImpact: 3, rewardCards: 2, penaltyImpact: -2,
+                    hint: "빵(♥)이 부족하면 금화(♦)나 병사(♠) 카드로 다른 나라와 교환해 보세요!"
+                },
+                {
+                    id: 2, title: "지역 전염병 방역 대책", type: "national",
+                    description: "인근 지역에 전염병이 발생했습니다. 의료 장비를 업그레이드하고 인력을 파견해 국민을 보호하세요.",
+                    requirements: { club: 10, heart: 8 }, rewardImpact: 3, rewardCards: 2, penaltyImpact: -2,
+                    hint: "배터리(♣)로 의료 기기를 가동하고, 빵(♥)이 부족하면 우방국에 도움을 요청하세요."
+                },
+                {
+                    id: 3, title: "사이버 공격 방어 작전", type: "national",
+                    description: "주요 금융과 전력 시설이 해커의 공격을 받았습니다. 방어 병력과 전력 설비를 긴급 동원하세요.",
+                    requirements: { spade: 12, club: 10 }, rewardImpact: 4, rewardCards: 2, penaltyImpact: -2,
+                    hint: "많은 병사(♠)와 배터리(♣)가 필요합니다. 이웃 나라와 거래해 보세요."
+                },
+                {
+                    id: 4, title: "기후 변화 대응 및 탄소 감축 협약", type: "international",
+                    description: "해수면 상승이 섬나라와 해안 지역을 위협합니다! 친환경 에너지 기술 개발 계획을 함께 추진하세요.",
+                    requirements: { club: 18, diamond: 15 }, rewardImpact: 6, rewardCards: 3, penaltyImpact: -3,
+                    hint: "최소 2개국의 협력이 필요합니다! 성공 시 영향력을 참여 국가끼리 똑같이 나눕니다."
+                },
+                {
+                    id: 5, title: "해양 쓰레기 및 미세 플라스틱 정화", type: "international",
+                    description: "공해상에 대규모 쓰레기가 쌓여 해양 생태계가 파괴되고 있습니다. 다국적 청소 선단과 보급대를 출동시키세요.",
+                    requirements: { heart: 16, spade: 10 }, rewardImpact: 4, rewardCards: 2, penaltyImpact: -2,
+                    hint: "참여 국가들이 영향력 보상을 똑같이 나눕니다. 투입할 자원을 잘 계산하세요."
+                },
+                {
+                    id: 6, title: "국제 고속철도 및 물류 허브 건설", type: "international",
+                    description: "여러 나라의 무역을 연결하기 위해 국경을 넘는 자동화 고속철도를 공동 건설하여 물류비용을 낮춥니다.",
+                    requirements: { diamond: 22, club: 12 }, rewardImpact: 8, rewardCards: 3, penaltyImpact: -4,
+                    hint: "대형 경제 협력 사업! 영향력 8점을 참여 국가들이 똑같이 나눕니다."
+                },
+                {
+                    id: 7, title: "국가 산업 자동화 및 AI 업그레이드", type: "national",
+                    description: "인구 고령화에 대비해 산업 현장에 자동화 로봇과 스마트 설비를 도입하여 경제 경쟁력을 높입니다.",
+                    requirements: { club: 14, diamond: 10 }, rewardImpact: 4, rewardCards: 2, penaltyImpact: -2,
+                    hint: "배터리(♣) 에너지와 금화(♦) 투자의 조화가 중요합니다."
+                },
+                {
+                    id: 8, title: "국제 인도주의 지진 긴급 구호", type: "international",
+                    description: "지각판 경계에서 강진이 발생했습니다. 국제 사회가 연합 구조대를 조직해 식량과 구호 자금을 전달해야 합니다.",
+                    requirements: { heart: 20, spade: 10, diamond: 10 }, rewardImpact: 9, rewardCards: 3, penaltyImpact: -3,
+                    hint: "고난도 이벤트! 자원을 분담할 수 있지만 보상도 똑같이 나눕니다."
+                }
+            ]
+        };
+
+        // Resource Suits Descriptor Map (Dynamic Name via I18N)
+        const SUIT_MAP = {
+            spade: { icon: "♠", colorClass: "text-[#0284c7]", badgeClass: "badge-spade" },
+            heart: { icon: "♥", colorClass: "text-[#e11d48]", badgeClass: "badge-heart" },
+            diamond: { icon: "♦", colorClass: "text-[#d97706]", badgeClass: "badge-diamond" },
+            club: { icon: "♣", colorClass: "text-[#16a34a]", badgeClass: "badge-club" }
+        };
+
+        // Helper to get translation
+        function t(key, ...args) {
+            const langObj = I18N[currentLang] || I18N['zh-TW'];
+            const val = langObj[key];
+            if (typeof val === 'function') return val(...args);
+            return val !== undefined ? val : key;
+        }
+
+        // Apply translations to static DOM elements
+        function applyLanguage(lang) {
+            currentLang = lang;
+            document.documentElement.lang = lang;
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                el.textContent = t(key);
+            });
+
+            // Update status badge
+            if (gameState.active) {
+                gameStatusBadge.innerHTML = `<i class="fa-solid fa-play mr-1"></i> <span>${t('statusPlaying')}</span>`;
+            } else {
+                gameStatusBadge.innerHTML = `<i class="fa-solid fa-cookie mr-1 text-[#f7a972]"></i> <span>${t('statusNotStarted')}</span>`;
+            }
+
+            // Re-render setup inputs if not started
+            if (!gameState.active) {
+                updatePlayerInputs();
+            } else {
+                updateUI();
+                // If an event is currently displayed, translate or refresh it
+                if (gameState.currentEvent) {
+                    if (gameState.currentEvent.id) {
+                        const localizedPreset = BASE_EVENTS_I18N[currentLang].find(e => e.id === gameState.currentEvent.id);
+                        if (localizedPreset) {
+                            displayEvent(localizedPreset);
+                        } else {
+                            displayEvent(gameState.currentEvent);
+                        }
+                    } else {
+                        displayEvent(gameState.currentEvent);
+                    }
+                }
+            }
+        }
+
+        // Language Select Listener
+        const languageSelect = document.getElementById('language-select');
+        languageSelect.addEventListener('change', (e) => {
+            applyLanguage(e.target.value);
+        });
+
+        // State Management
+        let gameState = {
+            active: false,
+            players: [], 
+            currentTurnIndex: 0,
+            maxRoundsPerPlayer: 5,
+            currentEvent: null,
+            eventHistory: []
+        };
+
+        // DOM Elements
+        const setupCard = document.getElementById('setup-card');
+        const scoreboardCard = document.getElementById('scoreboard-card');
+        const playerCountSelect = document.getElementById('player-count-select');
+        const playerNamesInputs = document.getElementById('player-names-inputs');
+        const startGameBtn = document.getElementById('start-game-btn');
+        const resetGameBtn = document.getElementById('reset-game-btn');
+        const gameStatusBadge = document.getElementById('game-status-badge');
+        
+        const currentTurnPlayerEl = document.getElementById('current-turn-player');
+        const drawEventBtn = document.getElementById('draw-event-btn');
+        
+        const eventEmptyState = document.getElementById('event-empty-state');
+        const eventContent = document.getElementById('event-content');
+        const eventTypeBadge = document.getElementById('event-type-badge');
+        const eventTitle = document.getElementById('event-title');
+        const eventInteractionHint = document.getElementById('event-interaction-hint');
+        const eventDescription = document.getElementById('event-description');
+        const eventRequirementsGrid = document.getElementById('event-requirements-grid');
+        const eventRewardText = document.getElementById('event-reward-text');
+        const eventPenaltyText = document.getElementById('event-penalty-text');
+
+        const participantCheckboxes = document.getElementById('participant-checkboxes');
+        const resourceInputFields = document.getElementById('resource-input-fields');
+        const submitEventBtn = document.getElementById('submit-event-btn');
+
+        const leaderboardList = document.getElementById('leaderboard-list');
+        const roundIndicator = document.getElementById('round-indicator');
+
+        const resultModal = document.getElementById('result-modal');
+        const modalIconContainer = document.getElementById('modal-icon-container');
+        const modalTitle = document.getElementById('modal-title');
+        const modalBody = document.getElementById('modal-body');
+        const modalImpactBreakdown = document.getElementById('modal-impact-breakdown');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+
+        const winnerModal = document.getElementById('winner-modal');
+        const winnerDisplay = document.getElementById('winner-display');
+        const finalRankingList = document.getElementById('final-ranking-list');
+
+        // Initialize Player Name Inputs based on count
+        function updatePlayerInputs() {
+            const count = parseInt(playerCountSelect.value);
+            playerNamesInputs.innerHTML = '';
+            
+            const defaultNames = t('defaultCountries');
+
+            for (let i = 0; i < count; i++) {
+                const div = document.createElement('div');
+                div.className = "flex items-center space-x-2";
+                div.innerHTML = `
+                    <span class="text-xs font-bold text-[#6b635b] w-14 truncate">${t('countryLabel')} ${i+1}:</span>
+                    <input type="text" id="player-input-${i}" value="${defaultNames[i]}" class="flex-grow bg-[#f4efe8] border-2 border-[#6b635b] rounded-xl px-3 py-1.5 text-xs font-bold text-[#4a4741] focus:outline-none focus:border-[#7bb5aa]" placeholder="${t('countryPlaceholder')}" />
+                `;
+                playerNamesInputs.appendChild(div);
+            }
+        }
+
+        // Event Listener for Player Count Change
+        playerCountSelect.addEventListener('change', updatePlayerInputs);
+        updatePlayerInputs(); // Initial run
+
+        // Start Game
+        startGameBtn.addEventListener('click', () => {
+            const count = parseInt(playerCountSelect.value);
+            const players = [];
+
+            for (let i = 0; i < count; i++) {
+                const nameInput = document.getElementById(`player-input-${i}`);
+                const name = nameInput.value.trim() || `${t('countryLabel')} ${i+1}`;
+                players.push({
+                    id: i,
+                    name: name,
+                    score: 0,
+                    turnsCompleted: 0
+                });
+            }
+
+            gameState.active = true;
+            gameState.players = players;
+            gameState.currentTurnIndex = 0;
+            gameState.currentEvent = null;
+
+            // UI Adjustments
+            setupCard.classList.add('hidden');
+            scoreboardCard.classList.remove('hidden');
+            drawEventBtn.disabled = false;
+            gameStatusBadge.className = "px-3 py-1 rounded-full text-xs font-bold bg-[#dcfce7] text-[#16a34a] border-2 border-[#4ade80]";
+            gameStatusBadge.innerHTML = `<i class="fa-solid fa-play mr-1"></i> <span>${t('statusPlaying')}</span>`;
+
+            updateUI();
+        });
+
+        // Reset Game
+        resetGameBtn.addEventListener('click', () => {
+            if (confirm(t('confirmReset'))) {
+                location.reload();
+            }
+        });
+
+        // Update Global UI elements
+        function updateUI() {
+            if (!gameState.active) return;
+
+            const currentPlayer = gameState.players[gameState.currentTurnIndex];
+            
+            // Calculate Current Game Round
+            const totalTurns = gameState.players.reduce((sum, p) => sum + p.turnsCompleted, 0);
+            const currentRound = Math.min(Math.floor(totalTurns / gameState.players.length) + 1, gameState.maxRoundsPerPlayer);
+            
+            roundIndicator.textContent = t('roundFormat', currentRound, gameState.maxRoundsPerPlayer);
+
+            // Turn Indicator
+            currentTurnPlayerEl.innerHTML = `
+                <i class="fa-solid fa-flag text-[#7bb5aa]"></i>
+                <span>${currentPlayer.name}</span>
+                <span class="text-xs text-[#8c8275] font-bold ml-1">${t('turnsCompletedFormat', currentPlayer.turnsCompleted, gameState.maxRoundsPerPlayer)}</span>
+            `;
+
+            // Render Leaderboard
+            renderLeaderboard();
+        }
+
+        // Render Scoreboard / Leaderboard
+        function renderLeaderboard() {
+            const sorted = [...gameState.players].sort((a, b) => b.score - a.score);
+            leaderboardList.innerHTML = '';
+
+            sorted.forEach((p, index) => {
+                const isCurrentTurn = p.id === gameState.players[gameState.currentTurnIndex].id;
+                const div = document.createElement('div');
+                div.className = `flex justify-between items-center p-2.5 rounded-2xl border-2 transition ${
+                    isCurrentTurn 
+                        ? 'bg-[#ffe8d6] border-[#f7a972] shadow-sm' 
+                        : 'bg-[#f4efe8] border-[#b8afa4]'
+                }`;
+
+                let rankBadge = `<span class="w-6 text-center text-xs text-[#8c8275] font-black">${index + 1}</span>`;
+                if (index === 0) rankBadge = `<span class="w-6 text-center text-[#d97706] font-black"><i class="fa-solid fa-crown text-xs"></i></span>`;
+                
+                div.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        ${rankBadge}
+                        <span class="text-xs font-black ${isCurrentTurn ? 'text-[#c27c4a]' : 'text-[#4a4741]'}">${p.name}</span>
+                        ${isCurrentTurn ? `<span class="text-[10px] bg-[#f7a972] text-white px-2 py-0.5 rounded-full font-bold">${t('actingBadge')}</span>` : ''}
+                    </div>
+                    <div class="flex items-center space-x-1.5">
+                        <span class="text-[11px] text-[#8c8275] font-bold">${t('impactLabel')}</span>
+                        <span class="text-sm font-black ${p.score >= 0 ? 'text-[#16a34a]' : 'text-[#e11d48]'}">${p.score}</span>
+                    </div>
+                `;
+                leaderboardList.appendChild(div);
+            });
+        }
+
+        // Draw Preset Event
+        drawEventBtn.addEventListener('click', () => {
+            const eventList = BASE_EVENTS_I18N[currentLang] || BASE_EVENTS_I18N['zh-TW'];
+            const randomIndex = Math.floor(Math.random() * eventList.length);
+            const event = eventList[randomIndex];
+            displayEvent(event);
+        });
+
+        // Display Event details in Main Inspector Panel
+        function displayEvent(event) {
+            gameState.currentEvent = event;
+
+            eventEmptyState.classList.add('hidden');
+            eventContent.classList.remove('hidden');
+
+            // Set Badges
+            if (event.type === 'national') {
+                eventTypeBadge.className = "px-3 py-1 rounded-xl text-xs font-black border-2 inline-block mb-1.5 bg-[#e0f2fe] text-[#0284c7] border-[#38bdf8]";
+                eventTypeBadge.textContent = t('typeNational');
+            } else {
+                eventTypeBadge.className = "px-3 py-1 rounded-xl text-xs font-black border-2 inline-block mb-1.5 bg-[#f3e8ff] text-[#7e22ce] border-[#c084fc]";
+                eventTypeBadge.textContent = t('typeIntl');
+            }
+
+            eventTitle.textContent = event.title;
+            eventInteractionHint.textContent = event.hint;
+            eventDescription.textContent = event.description;
+
+            // Render Requirements Grid
+            eventRequirementsGrid.innerHTML = '';
+            const suitNames = t('suits');
+            for (const [suitKey, val] of Object.entries(event.requirements)) {
+                if (!val || val <= 0) continue;
+                const suit = SUIT_MAP[suitKey];
+                const div = document.createElement('div');
+                div.className = `p-3 rounded-2xl border-2 flex justify-between items-center ${suit.badgeClass}`;
+                div.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <span class="text-2xl font-black">${suit.icon}</span>
+                        <span class="text-xs font-black">${suitNames[suitKey]}</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-[10px] block opacity-80 font-bold">${t('targetNeed')}</span>
+                        <span class="text-base font-black">${val} ${t('unitPoint')}</span>
+                    </div>
+                `;
+                eventRequirementsGrid.appendChild(div);
+            }
+
+            // Render Reward/Penalty text
+            if (event.type === 'national') {
+                eventRewardText.textContent = t('rewardNational', event.rewardImpact, event.rewardCards);
+            } else {
+                eventRewardText.textContent = t('rewardIntl', event.rewardImpact, event.rewardCards);
+            }
+            eventPenaltyText.textContent = t('penaltyText', event.penaltyImpact);
+
+            // Prepare Console Inputs
+            setupResolutionConsole(event);
+        }
+
+        // Setup Resolution Inputs for Players & Card Points
+        function setupResolutionConsole(event) {
+            const currentPlayer = gameState.players[gameState.currentTurnIndex];
+            const assistRewardSetting = document.getElementById('assist-reward-setting');
+            const participantSelectorLabel = document.getElementById('participant-selector-label');
+
+            if (event.type === 'national') {
+                assistRewardSetting.classList.remove('hidden');
+                participantSelectorLabel.textContent = t('selectAssistLabel');
+            } else {
+                assistRewardSetting.classList.add('hidden');
+                participantSelectorLabel.textContent = t('selectIntlLabel');
+            }
+            document.getElementById('assist-share-score').value = "0";
+
+            // Setup Checkboxes
+            participantCheckboxes.innerHTML = '';
+            gameState.players.forEach(p => {
+                const isInitiator = p.id === currentPlayer.id;
+                const label = document.createElement('label');
+                label.className = `inline-flex items-center px-3 py-1.5 rounded-xl border-2 text-xs font-bold cursor-pointer select-none transition ${
+                    isInitiator 
+                        ? 'bg-[#ffe8d6] border-[#f7a972] text-[#c27c4a]' 
+                        : 'bg-[#ffffff] border-[#b8afa4] text-[#4a4741] hover:bg-[#f4efe8]'
+                }`;
+                
+                label.innerHTML = `
+                    <input type="checkbox" value="${p.id}" ${isInitiator ? 'checked disabled' : ''} class="participant-cb mr-1.5 accent-[#f7a972]">
+                    ${p.name} ${isInitiator ? t('selfTag') : t('helperTag')}
+                `;
+                participantCheckboxes.appendChild(label);
+            });
+
+            // Setup Resource Point Inputs based on required suits
+            resourceInputFields.innerHTML = '';
+            const suitNames = t('suits');
+            for (const [suitKey, requiredVal] of Object.entries(event.requirements)) {
+                if (!requiredVal || requiredVal <= 0) continue;
+                const suit = SUIT_MAP[suitKey];
+                const div = document.createElement('div');
+                div.className = "bg-[#ffffff] border-2 border-[#b8afa4] p-2 rounded-xl space-y-1";
+                div.innerHTML = `
+                    <label class="block text-[11px] font-black ${suit.colorClass}">
+                        ${suit.icon} ${suitNames[suitKey]} (${t('needFormat', requiredVal)})
+                    </label>
+                    <input type="number" min="0" value="0" data-suit="${suitKey}" data-target="${requiredVal}" class="resource-input w-full bg-[#f4efe8] border-2 border-[#6b635b] rounded-lg px-2 py-1 text-sm font-black text-[#4a4741] focus:outline-none focus:border-[#7bb5aa]" placeholder="0">
+                `;
+                resourceInputFields.appendChild(div);
+            }
+        }
+
+        // Submit and Calculate Event Outcome
+        submitEventBtn.addEventListener('click', () => {
+            if (!gameState.currentEvent) return;
+
+            const event = gameState.currentEvent;
+            const currentPlayer = gameState.players[gameState.currentTurnIndex];
+
+            const checkedBoxes = document.querySelectorAll('.participant-cb:checked');
+            const participantIds = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
+            const assistantIds = participantIds.filter(id => id !== currentPlayer.id);
+
+            if (event.type === 'international' && participantIds.length < 2) {
+                alert(t('alertIntlMin'));
+                return;
+            }
+
+            const inputs = document.querySelectorAll('.resource-input');
+            const suitNames = t('suits');
+            let allRequirementsMet = true;
+            let breakdownList = [];
+
+            inputs.forEach(input => {
+                const suitKey = input.dataset.suit;
+                const targetVal = parseInt(input.dataset.target);
+                const inputVal = parseInt(input.value) || 0;
+                const suit = SUIT_MAP[suitKey];
+
+                const met = inputVal >= targetVal;
+                if (!met) allRequirementsMet = false;
+
+                breakdownList.push({
+                    suitName: suitNames[suitKey],
+                    icon: suit.icon,
+                    colorClass: suit.colorClass,
+                    inputVal: inputVal,
+                    targetVal: targetVal,
+                    met: met
+                });
+            });
+
+            if (allRequirementsMet) {
+                if (event.type === 'national') {
+                    // Integer input
+                    const assistShareInput = Math.max(0, Math.floor(parseInt(document.getElementById('assist-share-score').value) || 0));
+                    let assistSharePerCountry = 0;
+                    let initiatorGain = event.rewardImpact;
+
+                    if (assistantIds.length > 0 && assistShareInput > 0) {
+                        // Round to 1 decimal place
+                        assistSharePerCountry = Math.round((assistShareInput / assistantIds.length) * 10) / 10;
+                        initiatorGain = Math.round((event.rewardImpact - (assistSharePerCountry * assistantIds.length)) * 10) / 10;
+                        
+                        assistantIds.forEach(id => {
+                            const p = gameState.players.find(player => player.id === id);
+                            if (p) p.score = Math.round((p.score + assistSharePerCountry) * 10) / 10;
+                        });
+                    }
+                    currentPlayer.score = Math.round((currentPlayer.score + initiatorGain) * 10) / 10;
+
+                    showResultModal(true, event, participantIds, breakdownList, {
+                        type: 'national',
+                        initiatorGain: initiatorGain,
+                        assistGain: assistSharePerCountry,
+                        assistantCount: assistantIds.length
+                    });
+                } else {
+                    // International Event: Split equally among all participants, rounded to 1 decimal place
+                    const shareImpact = Math.round((event.rewardImpact / participantIds.length) * 10) / 10;
+                    participantIds.forEach(id => {
+                        const p = gameState.players.find(player => player.id === id);
+                        if (p) p.score = Math.round((p.score + shareImpact) * 10) / 10;
+                    });
+
+                    showResultModal(true, event, participantIds, breakdownList, {
+                        type: 'international',
+                        shareImpact: shareImpact
+                    });
+                }
+            } else {
+                if (event.type === 'national') {
+                    currentPlayer.score = Math.round((currentPlayer.score + event.penaltyImpact) * 10) / 10;
+                } else {
+                    participantIds.forEach(id => {
+                        const p = gameState.players.find(player => player.id === id);
+                        if (p) p.score = Math.round((p.score + event.penaltyImpact) * 10) / 10;
+                    });
+                }
+                showResultModal(false, event, participantIds, breakdownList, { penalty: event.penaltyImpact });
+            }
+        });
+
+        // Show Modal Feedback
+        function showResultModal(isSuccess, event, participantIds, breakdown, impactDetails) {
+            const separator = currentLang === 'en' ? ', ' : '、';
+            const participantNames = participantIds
+                .map(id => gameState.players.find(p => p.id === id)?.name)
+                .filter(Boolean)
+                .join(separator);
+
+            if (isSuccess) {
+                modalIconContainer.className = "w-20 h-20 mx-auto rounded-full flex items-center justify-center text-4xl bg-[#dcfce7] text-[#16a34a] border-3 border-[#4ade80]";
+                modalIconContainer.innerHTML = `<i class="fa-solid fa-face-smile-wink"></i>`;
+                modalTitle.textContent = t('modalSuccessTitle');
+                modalTitle.className = "text-2xl font-black text-[#16a34a]";
+                
+                if (event.type === 'national') {
+                    if (impactDetails.assistantCount > 0 && impactDetails.assistGain > 0) {
+                        modalBody.textContent = t('modalNationalAssist', gameState.players[gameState.currentTurnIndex].name, event.title, impactDetails.initiatorGain, impactDetails.assistGain);
+                    } else {
+                        modalBody.textContent = t('modalNationalSolo', gameState.players[gameState.currentTurnIndex].name, event.title, impactDetails.initiatorGain, event.rewardCards);
+                    }
+                } else {
+                    modalBody.textContent = t('modalIntlSuccess', participantNames, event.title, event.rewardImpact, participantIds.length, impactDetails.shareImpact, event.rewardCards);
+                }
+            } else {
+                modalIconContainer.className = "w-20 h-20 mx-auto rounded-full flex items-center justify-center text-4xl bg-[#ffe4e6] text-[#e11d48] border-3 border-[#fb7185]";
+                modalIconContainer.innerHTML = `<i class="fa-solid fa-face-sad-tear"></i>`;
+                modalTitle.textContent = t('modalFailTitle');
+                modalTitle.className = "text-2xl font-black text-[#e11d48]";
+
+                modalBody.textContent = t('modalFailBody', participantNames, event.penaltyImpact);
+            }
+
+            modalImpactBreakdown.innerHTML = `<div class="font-black text-[#4a4741] border-b-2 border-dashed border-[#b8afa4] pb-1 mb-1">${t('breakdownHeader')}</div>`;
+            breakdown.forEach(item => {
+                const div = document.createElement('div');
+                div.className = "flex justify-between items-center py-0.5 font-bold";
+                div.innerHTML = `
+                    <span class="${item.colorClass}">${item.icon} ${item.suitName}</span>
+                    <span class="${item.met ? 'text-[#16a34a]' : 'text-[#e11d48]'}">
+                        ${item.inputVal} / ${item.targetVal} ${t('unitPoint')} ${item.met ? '✓' : '✗'}
+                    </span>
+                `;
+                modalImpactBreakdown.appendChild(div);
+            });
+
+            resultModal.classList.remove('hidden');
+        }
+
+        // Close Modal and Proceed to Next Turn
+        modalCloseBtn.addEventListener('click', () => {
+            resultModal.classList.add('hidden');
+
+            const currentPlayer = gameState.players[gameState.currentTurnIndex];
+            currentPlayer.turnsCompleted += 1;
+
+            gameState.currentEvent = null;
+            eventContent.classList.add('hidden');
+            eventEmptyState.classList.remove('hidden');
+
+            const allCompleted = gameState.players.every(p => p.turnsCompleted >= gameState.maxRoundsPerPlayer);
+            
+            if (allCompleted) {
+                showFinalWinnerModal();
+            } else {
+                gameState.currentTurnIndex = (gameState.currentTurnIndex + 1) % gameState.players.length;
+                updateUI();
+            }
+        });
+
+        // Final Winner Display
+        function showFinalWinnerModal() {
+            const sorted = [...gameState.players].sort((a, b) => b.score - a.score);
+            const winner = sorted[0];
+
+            winnerDisplay.innerHTML = `
+                <div class="text-[#c27c4a] font-bold text-xs">${t('highestImpact')}</div>
+                <div class="text-3xl font-black text-[#4a4741] mt-1">${winner.name}</div>
+                <div class="text-xl font-black text-[#16a34a] mt-1">${winner.score} ${t('unitPoint')}</div>
+            `;
+
+            finalRankingList.innerHTML = `<div class="font-black text-[#4a4741] mb-2 border-b-2 border-dashed border-[#b8afa4] pb-1">${t('finalRankHeader')}</div>`;
+            sorted.forEach((p, index) => {
+                const div = document.createElement('div');
+                div.className = "flex justify-between items-center bg-[#f4efe8] p-2 rounded-xl border border-[#b8afa4] font-bold";
+                div.innerHTML = `
+                    <span class="text-[#4a4741]"><strong class="text-[#d97706] mr-2">${t('rankFormat', index + 1)}</strong> ${p.name}</span>
+                    <span class="font-black text-[#16a34a]">${p.score} ${t('unitPoint')}</span>
+                `;
+                finalRankingList.appendChild(div);
+            });
+
+            winnerModal.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
